@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Nilai & Kelulusan Siswa</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .print-card { shadow: none !important; border: 1px solid #ccc !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img id="appLogo" src="https://placehold.co/100x100/4f46e5/ffffff?text=SEKOLAH" alt="Logo Sekolah" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                <div>
+                    <h1 id="appSchoolName" class="text-lg font-bold leading-tight">SMA NEGERI AL BANNA</h1>
+                    <p class="text-xs text-indigo-200">Sistem Informasi Nilai & Kelulusan Siswa</p>
+                </div>
+            </div>
+            
+            <div id="userHeaderNav" class="hidden flex items-center space-x-4">
+                <div class="text-right hidden sm:block">
+                    <p id="navUserName" class="text-sm font-semibold"></p>
+                    <span id="navUserRole" class="inline-block px-2 py-0.5 text-xs bg-indigo-700 text-indigo-100 rounded-full capitalize"></span>
+                </div>
+                <button onclick="openApiConfigModal()" title="Pengaturan API GAS" class="p-2 text-indigo-200 hover:text-white hover:bg-indigo-800 rounded-lg transition">
+                    <i class="fa-solid fa-gear text-lg"></i>
+                </button>
+                <button onclick="handleLogout()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Keluar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- LOGIN SECTION -->
+        <div id="loginSection" class="max-w-md mx-auto my-8 sm:my-12">
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-100">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                        <i class="fa-solid fa-user-graduate text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">Masuk Akun</h2>
+                    <p class="text-sm text-slate-500 mt-1">Siswa (NISN/NIS), Wali Kelas, atau Admin</p>
+                </div>
+
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username / NISN</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="loginUsername" required placeholder="Masukkan Username / NISN" class="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password / NIS</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="password" id="loginPassword" required placeholder="Masukkan Password / NIS" class="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none transition">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 transition duration-200 flex items-center justify-center gap-2">
+                        <span>Masuk Sistem</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-6 border-t border-slate-100 text-xs text-slate-500 text-center">
+                    <button onclick="openApiConfigModal()" class="text-indigo-600 hover:underline text-xs inline-flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Pengaturan URL Backend Google Apps Script</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD CONTAINER -->
+        <div id="dashboardSection" class="hidden space-y-6">
+
+            <div id="roleSelectorBar" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 no-print">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <span class="text-sm font-semibold text-slate-600 whitespace-nowrap">Mode Tampilan:</span>
+                    <span id="roleBadge" class="px-3 py-1 bg-indigo-100 text-indigo-700 font-medium rounded-lg text-sm">Siswa</span>
+                </div>
+
+                <!-- Homeroom & Admin Filter Controls -->
+                <div id="filterControls" class="hidden flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div id="classFilterWrapper" class="flex-1 min-w-[150px]">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Pilih Kelas:</label>
+                        <select id="selectClass" onchange="handleClassChange()" class="w-full text-sm py-1.5 px-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </select>
+                    </div>
+
+                    <div id="studentFilterWrapper" class="flex-1 min-w-[180px]">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Pilih Siswa:</label>
+                        <select id="selectStudent" onchange="handleStudentChange()" class="w-full text-sm py-1.5 px-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-200 no-print">
+                <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto pb-1" id="mainTabs">
+                    <button onclick="switchTab('transkrip')" id="tab-transkrip" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">
+                        <i class="fa-solid fa-file-lines mr-2"></i>Transkrip 6 Semester
+                    </button>
+                    <button onclick="switchTab('grafik')" id="tab-grafik" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                        <i class="fa-solid fa-chart-line mr-2"></i>Grafik Perkembangan
+                    </button>
+                    <button onclick="switchTab('kelulusan')" id="tab-kelulusan" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                        <i class="fa-solid fa-graduation-cap mr-2"></i>Pengumuman Kelulusan
+                    </button>
+                    <button onclick="switchTab('rekapKelas')" id="tab-rekapKelas" class="tab-btn hidden px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                        <i class="fa-solid fa-users mr-2"></i>Rekap Kelas
+                    </button>
+                    <button onclick="switchTab('rangkingAdmin')" id="tab-rangkingAdmin" class="tab-btn hidden px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                        <i class="fa-solid fa-trophy mr-2"></i>Rangking Angkatan
+                    </button>
+                </nav>
+            </div>
+
+            <div id="studentBiodataCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 print-card">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    <img id="studentPhoto" src="https://placehold.co/150x180/e2e8f0/475569?text=FOTO+SISWA" alt="Foto Siswa" class="w-28 h-36 rounded-xl object-cover border-2 border-slate-200 shadow-sm flex-shrink-0">
+                    
+                    <div class="flex-grow text-center sm:text-left space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h2 id="studentName" class="text-xl sm:text-2xl font-bold text-slate-800">NAMA SISWA</h2>
+                            <span id="studentClassBadge" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold self-center sm:self-auto border border-indigo-100">Kelas</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-sm text-slate-600 border-t border-slate-100">
+                            <div>
+                                <span class="block text-xs text-slate-400">NISN</span>
+                                <strong id="studentNISN" class="text-slate-700">-</strong>
+                            </div>
+                            <div>
+                                <span class="block text-xs text-slate-400">NIS</span>
+                                <strong id="studentNIS" class="text-slate-700">-</strong>
+                            </div>
+                            <div>
+                                <span class="block text-xs text-slate-400">Rata-Rata Total (6 Sem)</span>
+                                <strong id="studentOverallAvg" class="text-indigo-600 text-lg font-bold">0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT 1: TRANSKRIP 6 SEMESTER -->
+            <div id="content-transkrip" class="tab-content space-y-6">
+                <!-- Semester Filter Buttons -->
+                <div class="flex flex-wrap items-center gap-2 no-print">
+                    <span class="text-xs font-semibold text-slate-500 uppercase mr-2">Pilih Semester:</span>
+                    <button onclick="filterSemester('ALL')" id="semBtn-ALL" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm">Semua (S1 - S6)</button>
+                    <button onclick="filterSemester(1)" id="semBtn-1" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 1</button>
+                    <button onclick="filterSemester(2)" id="semBtn-2" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 2</button>
+                    <button onclick="filterSemester(3)" id="semBtn-3" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 3</button>
+                    <button onclick="filterSemester(4)" id="semBtn-4" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 4</button>
+                    <button onclick="filterSemester(5)" id="semBtn-5" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 5</button>
+                    <button onclick="filterSemester(6)" id="semBtn-6" class="sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Sem 6</button>
+                </div>
+
+                <div id="gradesTablesContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Dynamic semester tables will be injected here -->
+                </div>
+
+                <!-- Mapel Averages Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 print-card">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-indigo-600"></i>
+                        <span>Rata-Rata Nilai Per Mata Pelajaran (Selama 6 Semester)</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs uppercase bg-slate-50 text-slate-700">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg">Mata Pelajaran</th>
+                                    <th class="px-4 py-3 text-center">Jumlah Semester Terdata</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Rata-Rata Mapel</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subjectAvgTableBody" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-grafik" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Overall Semester Progress Chart -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-indigo-600"></i>
+                            <span>Tren Rata-Rata Per Semester</span>
+                        </h3>
+                        <div class="h-64 relative">
+                            <canvas id="semesterChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Subject Specific Progress Chart -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-bar text-emerald-600"></i>
+                                <span>Perkembangan Nilai Mapel</span>
+                            </h3>
+                            <select id="selectSubjectChart" onchange="updateSubjectChart()" class="text-xs py-1.5 px-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </select>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="subjectChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-kelulusan" class="tab-content hidden">
+                <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl border border-indigo-100 p-6 sm:p-10 text-center relative overflow-hidden print-card">
+                    <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+
+                    <div class="mb-6">
+                        <img id="gradSchoolLogo" src="https://placehold.co/100x100/4f46e5/ffffff?text=SEKOLAH" alt="Logo" class="w-20 h-20 mx-auto rounded-full border-4 border-white shadow-md mb-2 object-cover">
+                        <h3 id="gradSchoolName" class="text-xl font-bold text-slate-800">SMA NEGERI AL BANNA</h3>
+                        <p class="text-xs text-slate-500">SURAT PENGUMUMAN KELULUSAN SISWA</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 text-left space-y-2">
+                        <div class="flex justify-between border-b border-slate-200 pb-2 text-sm">
+                            <span class="text-slate-500">Nama Siswa:</span>
+                            <span id="gradStudentName" class="font-bold text-slate-800">-</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200 pb-2 text-sm">
+                            <span class="text-slate-500">NISN / NIS:</span>
+                            <span id="gradStudentNISN" class="font-bold text-slate-800">-</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Kelas:</span>
+                            <span id="gradStudentClass" class="font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+
+                    <div class="my-6 p-6 bg-indigo-50/70 rounded-2xl border border-indigo-100">
+                        <p class="text-xs text-indigo-600 uppercase font-semibold tracking-wider mb-1">Rata-Rata Nilai Transkrip (Semester 1 - 6)</p>
+                        <div id="gradOverallScore" class="text-4xl font-extrabold text-indigo-900 my-2">0.00</div>
+                        <p class="text-xs text-slate-500">Berdasarkan hasil rapat pleno dewan guru, siswa tersebut dinyatakan:</p>
+                        
+                        <div id="gradStatusBadge" class="mt-4 inline-block px-8 py-3 rounded-2xl text-xl font-black uppercase tracking-wider shadow-md bg-emerald-500 text-white">
+                            LULUS
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-center gap-3 no-print">
+                        <button onclick="window.print()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-xl text-sm transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak Surat Pengumuman</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-rekapKelas" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Rekapitulasi Nilai Kelas</h3>
+                            <p class="text-xs text-slate-500">Daftar rata-rata nilai siswa per semester dan peringkat kelas.</p>
+                        </div>
+                        <button onclick="exportTableToCSV('rekapKelasTable', 'Rekap_Kelas')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 no-print">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Ekspor CSV</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table id="rekapKelasTable" class="w-full text-xs sm:text-sm text-left text-slate-600">
+                            <thead class="uppercase bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="px-3 py-3 text-center">Rank</th>
+                                    <th class="px-3 py-3">Nama Siswa</th>
+                                    <th class="px-3 py-3">NISN</th>
+                                    <th class="px-3 py-3 text-center">S1</th>
+                                    <th class="px-3 py-3 text-center">S2</th>
+                                    <th class="px-3 py-3 text-center">S3</th>
+                                    <th class="px-3 py-3 text-center">S4</th>
+                                    <th class="px-3 py-3 text-center">S5</th>
+                                    <th class="px-3 py-3 text-center">S6</th>
+                                    <th class="px-3 py-3 text-right font-bold">Rata2 Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rekapKelasTableBody" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-rangkingAdmin" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Peringkat Angkatan (Semua Kelas)</h3>
+                            <p class="text-xs text-slate-500">Analisis rangking antar seluruh siswa dalam angkatan.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <select id="selectRankingSemester" onchange="renderAdminRankingTable()" class="text-xs py-1.5 px-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                                <option value="OVERALL">Akumulasi 6 Semester</option>
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                                <option value="3">Semester 3</option>
+                                <option value="4">Semester 4</option>
+                                <option value="5">Semester 5</option>
+                                <option value="6">Semester 6</option>
+                            </select>
+                            <button onclick="exportTableToCSV('adminRankingTable', 'Rangking_Angkatan')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 no-print">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Ekspor</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table id="adminRankingTable" class="w-full text-xs sm:text-sm text-left text-slate-600">
+                            <thead class="uppercase bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="px-4 py-3 text-center">Peringkat</th>
+                                    <th class="px-4 py-3">Nama Siswa</th>
+                                    <th class="px-4 py-3">NISN</th>
+                                    <th class="px-4 py-3">Kelas</th>
+                                    <th class="px-4 py-3 text-right font-bold">Rata-Rata Nilai</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminRankingTableBody" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="apiConfigModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-indigo-600"></i>
+                    <span>Pengaturan URL Backend Appscript</span>
+                </h3>
+                <button onclick="closeApiConfigModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500">
+                Tempelkan URL Web App dari Google Apps Script yang telah Anda publikasikan agar aplikasi dapat terhubung secara live ke Google Spreadsheet.
+            </p>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Web App URL (Google Apps Script):</label>
+                <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeApiConfigModal()" class="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-200">Batal</button>
+                <button onclick="saveGasUrl()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 shadow">Simpan & Muat Ulang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Message -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl text-white text-sm shadow-xl flex items-center gap-2 transition transform translate-y-2">
+        <i id="toastIcon" class="fa-solid fa-circle-info"></i>
+        <span id="toastMsg">Notifikasi</span>
+    </div>
+
+    <script>
+        let appState = {
+            gasUrl: localStorage.getItem('GAS_WEB_APP_URL') || '',
+            currentUser: null,
+            db: { settings: {}, users: [], students: [], grades: [] },
+            selectedStudentNISN: null,
+            activeTab: 'transkrip',
+            activeSemesterFilter: 'ALL',
+            charts: {
+                semChart: null,
+                subjChart: null
+            }
+        };
+
+        // Initialize App on DOM Load
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+
+        async function initApp() {
+            if (appState.gasUrl) {
+                document.getElementById('gasUrlInput').value = appState.gasUrl;
+                showToast('Terhubung ke Backend Google Apps Script...', 'info');
+                await fetchLiveDataFromGAS();
+            } else {
+                showToast('URL Backend belum diatur. Silakan atur URL Web App terlebih dahulu.', 'error');
+                openApiConfigModal();
+            }
+        }
+
+        async function fetchLiveDataFromGAS() {
+            try {
+                const response = await fetch(`${appState.gasUrl}?action=getAllData`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    appState.db = result.data;
+                    setupSchoolSettings(appState.db.settings);
+                    showToast('Data berhasil disinkronkan dari Google Spreadsheet', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (err) {
+                console.error('GAS Fetch Error:', err);
+                showToast('Gagal memuat data! Periksa kembali URL Google Apps Script Anda.', 'error');
+            }
+        }
+
+        function setupSchoolSettings(settings) {
+            if (!settings) return;
+            document.getElementById('appSchoolName').textContent = settings.nama_sekolah || 'SMA NEGERI AL BANNA';
+            document.getElementById('gradSchoolName').textContent = settings.nama_sekolah || 'SMA NEGERI AL BANNA';
+            if (settings.logo_url) {
+                document.getElementById('appLogo').src = settings.logo_url;
+                document.getElementById('gradSchoolLogo').src = settings.logo_url;
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const uname = document.getElementById('loginUsername').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            const user = appState.db.users.find(u => u.username === uname && u.password === pass);
+
+            if (!user) {
+                showToast('Username atau Password Salah!', 'error');
+                return;
+            }
+
+            appState.currentUser = user;
+            showToast(`Selamat datang, ${user.nama}`, 'success');
+
+            // Render Dashboard UI according to role
+            setupDashboardForUser();
+        }
+
+        function handleLogout() {
+            appState.currentUser = null;
+            appState.selectedStudentNISN = null;
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('userHeaderNav').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            showToast('Anda telah keluar.', 'info');
+        }
+
+        function setupDashboardForUser() {
+            const user = appState.currentUser;
+            
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('userHeaderNav').classList.remove('hidden');
+
+            document.getElementById('navUserName').textContent = user.nama;
+            
+            // Format tampilan role / mode
+            let displayRole = user.role.toUpperCase();
+            if (user.username === 'Bu Rina' || user.nama.includes('Rina')) {
+                displayRole = 'GURU WALI';
+            } else if (user.role === 'walikelas') {
+                displayRole = 'WALI KELAS';
+            }
+
+            document.getElementById('navUserRole').textContent = displayRole;
+            document.getElementById('roleBadge').textContent = displayRole;
+
+            const filterControls = document.getElementById('filterControls');
+            const studentFilterWrapper = document.getElementById('studentFilterWrapper');
+            const classFilterWrapper = document.getElementById('classFilterWrapper');
+
+            // Reset tab visibility based on role
+            const tabKelulusan = document.getElementById('tab-kelulusan');
+            const tabRekapKelas = document.getElementById('tab-rekapKelas');
+            const tabRangkingAdmin = document.getElementById('tab-rangkingAdmin');
+
+            if (user.role === 'siswa') {
+                filterControls.classList.add('hidden');
+                
+                // Tab Siswa: Transkrip, Grafik, Pengumuman Kelulusan
+                tabKelulusan.classList.remove('hidden');
+                tabRekapKelas.classList.add('hidden');
+                tabRangkingAdmin.classList.add('hidden');
+
+                appState.selectedStudentNISN = user.ref;
+                renderStudentDetails(appState.selectedStudentNISN);
+            } 
+            else if (user.role === 'walikelas') {
+                filterControls.classList.remove('hidden');
+                classFilterWrapper.classList.add('hidden'); // Wali kelas stays in their assigned class
+                
+                // Tab Wali Kelas: Transkrip, Grafik, Rekap Kelas
+                tabKelulusan.classList.add('hidden');
+                tabRekapKelas.classList.remove('hidden');
+                tabRangkingAdmin.classList.add('hidden');
+
+                const myClass = user.ref;
+                populateStudentDropdown(myClass);
+                renderClassRecap(myClass);
+            } 
+            else if (user.role === 'admin') {
+                filterControls.classList.remove('hidden');
+                classFilterWrapper.classList.remove('hidden');
+                
+                // Tab Admin: Semua Tab
+                tabKelulusan.classList.remove('hidden');
+                tabRekapKelas.classList.remove('hidden');
+                tabRangkingAdmin.classList.remove('hidden');
+
+                populateClassDropdown();
+                const firstClass = document.getElementById('selectClass').value;
+                populateStudentDropdown(firstClass);
+                renderClassRecap(firstClass);
+                renderAdminRankingTable();
+            }
+
+            switchTab('transkrip');
+        }
+
+        function populateClassDropdown() {
+            const classes = [...new Set(appState.db.students.map(s => s.kelas))];
+            const selectClass = document.getElementById('selectClass');
+            selectClass.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function populateStudentDropdown(className) {
+            const studentsInClass = appState.db.students.filter(s => s.kelas === className);
+            const selectStudent = document.getElementById('selectStudent');
+            
+            selectStudent.innerHTML = studentsInClass.map(s => `<option value="${s.nisn}">${s.nama} (${s.nisn})</option>`).join('');
+
+            if (studentsInClass.length > 0) {
+                appState.selectedStudentNISN = studentsInClass[0].nisn;
+                renderStudentDetails(appState.selectedStudentNISN);
+            }
+        }
+
+        function handleClassChange() {
+            const selectedClass = document.getElementById('selectClass').value;
+            populateStudentDropdown(selectedClass);
+            renderClassRecap(selectedClass);
+        }
+
+        function handleStudentChange() {
+            appState.selectedStudentNISN = document.getElementById('selectStudent').value;
+            renderStudentDetails(appState.selectedStudentNISN);
+        }
+
+        function renderStudentDetails(nisn) {
+            const student = appState.db.students.find(s => s.nisn === nisn);
+            if (!student) return;
+
+            // Biodata Card
+            document.getElementById('studentName').textContent = student.nama;
+            document.getElementById('studentNISN').textContent = student.nisn;
+            document.getElementById('studentNIS').textContent = student.nis;
+            document.getElementById('studentClassBadge').textContent = student.kelas;
+            document.getElementById('studentPhoto').src = student.foto || appState.db.settings.foto_default;
+
+            // Graduation Tab Info
+            document.getElementById('gradStudentName').textContent = student.nama;
+            document.getElementById('gradStudentNISN').textContent = `${student.nisn} / ${student.nis}`;
+            document.getElementById('gradStudentClass').textContent = student.kelas;
+            
+            const statusBadge = document.getElementById('gradStatusBadge');
+            statusBadge.textContent = student.status || 'LULUS';
+            if ((student.status || 'LULUS').toUpperCase() === 'LULUS') {
+                statusBadge.className = "mt-4 inline-block px-8 py-3 rounded-2xl text-xl font-black uppercase tracking-wider shadow-md bg-emerald-500 text-white";
+            } else {
+                statusBadge.className = "mt-4 inline-block px-8 py-3 rounded-2xl text-xl font-black uppercase tracking-wider shadow-md bg-rose-500 text-white";
+            }
+
+            // Calculate Grades
+            const studentGrades = appState.db.grades.filter(g => g.nisn === nisn);
+
+            // Render Grades Table
+            renderGradeTables(studentGrades);
+
+            // Render Subject Average Table
+            renderSubjectAverages(studentGrades);
+
+            // Calculate Overall 6-Semester Average
+            const overallAvg = calculateOverallAverage(studentGrades);
+            document.getElementById('studentOverallAvg').textContent = overallAvg.toFixed(2);
+            document.getElementById('gradOverallScore').textContent = overallAvg.toFixed(2);
+
+            // Render Charts
+            renderCharts(studentGrades);
+        }
+
+        function calculateOverallAverage(grades) {
+            if (!grades || grades.length === 0) return 0;
+            const sum = grades.reduce((acc, curr) => acc + Number(curr.nilai), 0);
+            return sum / grades.length;
+        }
+
+        function renderGradeTables(grades) {
+            const container = document.getElementById('gradesTablesContainer');
+            container.innerHTML = '';
+
+            for (let sem = 1; sem <= 6; sem++) {
+                if (appState.activeSemesterFilter !== 'ALL' && appState.activeSemesterFilter !== sem) {
+                    continue;
+                }
+
+                const semGrades = grades.filter(g => Number(g.sem) === sem);
+                const semAvg = semGrades.length > 0 ? (semGrades.reduce((a, b) => a + Number(b.nilai), 0) / semGrades.length).toFixed(2) : '0.00';
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-card">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-7 h-7 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center text-xs">${sem}</span>
+                                <span>Semester ${sem}</span>
+                            </h4>
+                            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md">
+                                Rata-Rata: <strong class="text-indigo-600">${semAvg}</strong>
+                            </span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600">
+                                <thead class="uppercase bg-slate-50 text-slate-500">
+                                    <tr>
+                                        <th class="px-3 py-2">Mata Pelajaran</th>
+                                        <th class="px-3 py-2 text-right">Nilai</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${semGrades.length > 0 ? semGrades.map(g => `
+                                        <tr>
+                                            <td class="px-3 py-2 font-medium text-slate-700">${g.mapel}</td>
+                                            <td class="px-3 py-2 text-right font-bold ${g.nilai >= 75 ? 'text-slate-800' : 'text-rose-600'}">${g.nilai}</td>
+                                        </tr>
+                                    `).join('') : `<tr><td colspan="2" class="px-3 py-4 text-center text-slate-400 italic">Belum ada data nilai</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            }
+        }
+
+        function renderSubjectAverages(grades) {
+            const subjectsMap = {};
+
+            grades.forEach(g => {
+                if (!subjectsMap[g.mapel]) {
+                    subjectsMap[g.mapel] = { sum: 0, count: 0 };
+                }
+                subjectsMap[g.mapel].sum += Number(g.nilai);
+                subjectsMap[g.mapel].count += 1;
+            });
+
+            const tbody = document.getElementById('subjectAvgTableBody');
+            tbody.innerHTML = '';
+
+            const subjectsList = Object.keys(subjectsMap);
+
+            if (subjectsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-400">Tidak ada data</td></tr>`;
+                return;
+            }
+
+            subjectsList.forEach(mapel => {
+                const avg = (subjectsMap[mapel].sum / subjectsMap[mapel].count).toFixed(2);
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-2.5 font-semibold text-slate-700">${mapel}</td>
+                        <td class="px-4 py-2.5 text-center">${subjectsMap[mapel].count} Semester</td>
+                        <td class="px-4 py-2.5 text-right font-bold text-indigo-600">${avg}</td>
+                    </tr>
+                `);
+            });
+
+            // Populate subject dropdown for chart
+            const selectSubj = document.getElementById('selectSubjectChart');
+            selectSubj.innerHTML = subjectsList.map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        function renderCharts(grades) {
+            // Semester Trend Chart
+            const semAvgs = [];
+            for (let s = 1; s <= 6; s++) {
+                const sg = grades.filter(g => Number(g.sem) === s);
+                const avg = sg.length > 0 ? sg.reduce((a, b) => a + Number(b.nilai), 0) / sg.length : 0;
+                semAvgs.push(avg.toFixed(2));
+            }
+
+            const ctxSem = document.getElementById('semesterChart').getContext('2d');
+            if (appState.charts.semChart) appState.charts.semChart.destroy();
+
+            appState.charts.semChart = new Chart(ctxSem, {
+                type: 'line',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                    datasets: [{
+                        label: 'Rata-Rata Semester',
+                        data: semAvgs,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#4f46e5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 60, max: 100 } }
+                }
+            });
+
+            updateSubjectChart();
+        }
+
+        function updateSubjectChart() {
+            const nisn = appState.selectedStudentNISN;
+            const selectedSubject = document.getElementById('selectSubjectChart').value;
+            const grades = appState.db.grades.filter(g => g.nisn === nisn && g.mapel === selectedSubject);
+
+            const subjData = [];
+            for (let s = 1; s <= 6; s++) {
+                const item = grades.find(g => Number(g.sem) === s);
+                subjData.push(item ? item.nilai : null);
+            }
+
+            const ctxSubj = document.getElementById('subjectChart').getContext('2d');
+            if (appState.charts.subjChart) appState.charts.subjChart.destroy();
+
+            appState.charts.subjChart = new Chart(ctxSubj, {
+                type: 'bar',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                    datasets: [{
+                        label: `Nilai ${selectedSubject}`,
+                        data: subjData,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 60, max: 100 } }
+                }
+            });
+        }
+
+        function renderClassRecap(className) {
+            const classStudents = appState.db.students.filter(s => s.kelas === className);
+            const recapData = [];
+
+            classStudents.forEach(s => {
+                const sGrades = appState.db.grades.filter(g => g.nisn === s.nisn);
+                const semAvgs = [];
+                for (let sem = 1; sem <= 6; sem++) {
+                    const sg = sGrades.filter(g => Number(g.sem) === sem);
+                    const avg = sg.length > 0 ? sg.reduce((a, b) => a + Number(b.nilai), 0) / sg.length : 0;
+                    semAvgs.push(avg);
+                }
+
+                const overall = calculateOverallAverage(sGrades);
+
+                recapData.push({
+                    student: s,
+                    semAvgs: semAvgs,
+                    overall: overall
+                });
+            });
+
+            // Sort by overall average descending
+            recapData.sort((a, b) => b.overall - a.overall);
+
+            const tbody = document.getElementById('rekapKelasTableBody');
+            tbody.innerHTML = '';
+
+            recapData.forEach((item, index) => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-50 cursor-pointer" onclick="selectStudentFromRecap('${item.student.nisn}')">
+                        <td class="px-3 py-3 text-center font-bold text-slate-700">${index + 1}</td>
+                        <td class="px-3 py-3 font-semibold text-indigo-600 hover:underline">${item.student.nama}</td>
+                        <td class="px-3 py-3">${item.student.nisn}</td>
+                        ${item.semAvgs.map(a => `<td class="px-3 py-3 text-center">${a > 0 ? a.toFixed(1) : '-'}</td>`).join('')}
+                        <td class="px-3 py-3 text-right font-bold text-indigo-700">${item.overall.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        function selectStudentFromRecap(nisn) {
+            document.getElementById('selectStudent').value = nisn;
+            handleStudentChange();
+            switchTab('transkrip');
+        }
+
+        function renderAdminRankingTable() {
+            const selectedSem = document.getElementById('selectRankingSemester').value;
+            const students = appState.db.students;
+            const rankingList = [];
+
+            students.forEach(s => {
+                const sGrades = appState.db.grades.filter(g => g.nisn === s.nisn);
+                let score = 0;
+
+                if (selectedSem === 'OVERALL') {
+                    score = calculateOverallAverage(sGrades);
+                } else {
+                    const semGrades = sGrades.filter(g => Number(g.sem) === Number(selectedSem));
+                    score = semGrades.length > 0 ? semGrades.reduce((a, b) => a + Number(b.nilai), 0) / semGrades.length : 0;
+                }
+
+                rankingList.push({ student: s, score: score });
+            });
+
+            rankingList.sort((a, b) => b.score - a.score);
+
+            const tbody = document.getElementById('adminRankingTableBody');
+            tbody.innerHTML = '';
+
+            rankingList.forEach((item, index) => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-center font-bold text-slate-700">#${index + 1}</td>
+                        <td class="px-4 py-3 font-semibold text-slate-800">${item.student.nama}</td>
+                        <td class="px-4 py-3">${item.student.nisn}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">${item.student.kelas}</span></td>
+                        <td class="px-4 py-3 text-right font-bold text-indigo-600">${item.score.toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        function switchTab(tabId) {
+            appState.activeTab = tabId;
+
+            // Gunakan classList agar tidak menghapus class 'hidden'
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-600', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-indigo-600', 'text-indigo-600');
+            }
+
+            const activeContent = document.getElementById(`content-${tabId}`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+        }
+
+        function filterSemester(sem) {
+            appState.activeSemesterFilter = sem;
+
+            document.querySelectorAll('.sem-filter-btn').forEach(btn => {
+                btn.className = 'sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+            });
+
+            document.getElementById(`semBtn-${sem}`).className = 'sem-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm';
+
+            if (appState.selectedStudentNISN) {
+                const studentGrades = appState.db.grades.filter(g => g.nisn === appState.selectedStudentNISN);
+                renderGradeTables(studentGrades);
+            }
+        }
+
+        function openApiConfigModal() {
+            document.getElementById('apiConfigModal').classList.remove('hidden');
+        }
+
+        function closeApiConfigModal() {
+            document.getElementById('apiConfigModal').classList.add('hidden');
+        }
+
+        function saveGasUrl() {
+            const url = document.getElementById('gasUrlInput').value.trim();
+            localStorage.setItem('GAS_WEB_APP_URL', url);
+            appState.gasUrl = url;
+            closeApiConfigModal();
+            location.reload();
+        }
+
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            let csv = [];
+            for (let row of table.rows) {
+                let cols = Array.from(row.cells).map(cell => `"${cell.innerText.replace(/"/g, '""')}"`);
+                csv.push(cols.join(','));
+            }
+
+            const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.download = `${filename}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+
+            msg.textContent = message;
+
+            if (type === 'success') {
+                toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-white text-sm shadow-xl flex items-center gap-2 bg-emerald-600';
+                icon.className = 'fa-solid fa-circle-check';
+            } else if (type === 'error') {
+                toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-white text-sm shadow-xl flex items-center gap-2 bg-rose-600';
+                icon.className = 'fa-solid fa-circle-exclamation';
+            } else {
+                toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-white text-sm shadow-xl flex items-center gap-2 bg-indigo-600';
+                icon.className = 'fa-solid fa-circle-info';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
