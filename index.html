@@ -83,7 +83,7 @@
         <div class="flex items-center gap-3">
           <img id="school-logo" src="https://placehold.co/80x80/2563eb/ffffff?text=SMA" alt="Logo Sekolah" class="w-10 h-10 object-contain rounded-lg border border-slate-200 p-0.5">
           <div>
-            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMAN 2 SMART ACADEMY</h1>
+            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMA Albanna</h1>
             <p id="school-subtitle" class="text-xs text-slate-500">Sistem Informasi Hasil Belajar Siswa (6 Semester)</p>
           </div>
         </div>
@@ -450,7 +450,7 @@
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <p>&copy; 2026 SMAN 2 Smart Academy. All rights reserved.</p>
+      <p>&copy; 2026 by. All rights reserved.</p>
       <div class="flex items-center gap-3">
         <button onclick="toggleApiModal(true)" class="hover:text-brand-600 transition">Konfigurasi API</button>
         <span>•</span>
@@ -465,15 +465,15 @@
     // KONFIGURASI AUTOMATIS API WEB APP GOOGLE APPS SCRIPT
     // Tempelkan URL Web App Google Apps Script Anda di variabel DEFAULT_API_URL:
     // =========================================================================
-    const DEFAULT_API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbyXup71i9y_yQiIFVBgdcXCxIJX1YYJeBhCjI6bFZz5BRPtqHta6RB67sXxX5VeI4fX/exec";
 
     let API_URL = localStorage.getItem('API_URL') || DEFAULT_API_URL;
     let currentUser = null; // { username, role, nisn, nama, kelas }
     let rawDatabase = {
       settings: {
-        nama_sekolah: 'SMAN 2 SMART ACADEMY',
+        nama_sekolah: 'SMA Albanna',
         logo_url: 'https://placehold.co/80x80/2563eb/ffffff?text=SMA',
-        tahun_ajaran: '2025/2026'
+        tahun_ajaran: '2026/2027'
       },
       users: [],
       students: [],
@@ -590,7 +590,7 @@
 
     function applySettings() {
       if (rawDatabase.settings) {
-        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMAN 2 SMART ACADEMY';
+        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMA Albanna';
         document.getElementById('school-subtitle').innerText = `Sistem Informasi Hasil Belajar Siswa (${rawDatabase.settings.tahun_ajaran || '2025/2026'})`;
         if (rawDatabase.settings.logo_url) {
           document.getElementById('school-logo').src = rawDatabase.settings.logo_url;
