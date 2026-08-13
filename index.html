@@ -83,7 +83,7 @@
         <div class="flex items-center gap-3">
           <img id="school-logo" src="https://placehold.co/80x80/2563eb/ffffff?text=SMA" alt="Logo Sekolah" class="w-10 h-10 object-contain rounded-lg border border-slate-200 p-0.5">
           <div>
-            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMAN 2 SMART ACADEMY</h1>
+            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMA Albanna</h1>
             <p id="school-subtitle" class="text-xs text-slate-500">Sistem Informasi Hasil Belajar Siswa (6 Semester)</p>
           </div>
         </div>
@@ -579,7 +579,7 @@
 
     function applySettings() {
       if (rawDatabase.settings) {
-        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMAN 2 SMART ACADEMY';
+        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMA Albanna';
         document.getElementById('school-subtitle').innerText = `Sistem Informasi Hasil Belajar Siswa (${rawDatabase.settings.tahun_ajaran || '2025/2026'})`;
         if (rawDatabase.settings.logo_url) {
           document.getElementById('school-logo').src = rawDatabase.settings.logo_url;
