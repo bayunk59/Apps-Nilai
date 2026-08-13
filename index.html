@@ -83,7 +83,7 @@
         <div class="flex items-center gap-3">
           <img id="school-logo" src="https://placehold.co/80x80/2563eb/ffffff?text=SMA" alt="Logo Sekolah" class="w-10 h-10 object-contain rounded-lg border border-slate-200 p-0.5">
           <div>
-            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMA Albanna</h1>
+            <h1 id="school-name" class="font-bold text-slate-900 text-base sm:text-lg leading-tight">SMAN 2 SMART ACADEMY</h1>
             <p id="school-subtitle" class="text-xs text-slate-500">Sistem Informasi Hasil Belajar Siswa (6 Semester)</p>
           </div>
         </div>
@@ -162,7 +162,7 @@
             <ul class="space-y-1 pl-4 list-disc text-[11px] text-slate-500">
               <li><b>Siswa:</b> Username = NISN (Contoh: <code class="bg-slate-200 px-1 rounded">0051234001</code>), Password = NIS (<code class="bg-slate-200 px-1 rounded">21221001</code>)</li>
               <li><b>Wali Kelas:</b> Username = Nama Guru (Contoh: <code class="bg-slate-200 px-1 rounded">Budi Santoso</code>), Password = <code class="bg-slate-200 px-1 rounded">#smana2026</code></li>
-              <li><b>Guru Wali:</b> Username = Nama Guru, Password = <code class="bg-slate-200 px-1 rounded">#gwsmana</code></li>
+              <li><b>Guru Wali:</b> Username = Nama Guru (Contoh: <code class="bg-slate-200 px-1 rounded">Siti Aminah</code>), Password = <code class="bg-slate-200 px-1 rounded">#gwsmana</code></li>
               <li><b>Admin:</b> Username = <code class="bg-slate-200 px-1 rounded">Orang</code>, Password = <code class="bg-slate-200 px-1 rounded">#Albanna123</code></li>
             </ul>
           </div>
@@ -176,9 +176,9 @@
       <!-- Navigation Tabs (Siswa / Wali / Admin) -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         
-        <!-- Controls for Wali Kelas / Admin -->
+        <!-- Controls for Wali Kelas / Guru Wali / Admin -->
         <div id="selector-controls" class="w-full sm:w-auto flex flex-wrap items-center gap-3">
-          <!-- Class Filter (For Admin & Wali Kelas) -->
+          <!-- Class Filter -->
           <div id="class-filter-container" class="hidden flex-1 sm:flex-initial">
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pilih Kelas</label>
             <select id="select-kelas" onchange="handleClassChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-500">
@@ -186,7 +186,7 @@
             </select>
           </div>
 
-          <!-- Student Filter (For Admin & Wali Kelas) -->
+          <!-- Student Filter -->
           <div id="student-filter-container" class="hidden flex-1 sm:flex-initial">
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pilih Siswa</label>
             <select id="select-siswa" onchange="handleStudentChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-500">
@@ -331,7 +331,7 @@
         </div>
       </div>
 
-      <!-- TAB 2: CLASS RECAP (Wali Kelas / Admin) -->
+      <!-- TAB 2: CLASS RECAP (Wali Kelas / Guru Wali / Admin) -->
       <div id="tab-content-rekap" class="hidden space-y-6">
         <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
@@ -450,7 +450,7 @@
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <p>&copy; 2026 SMA Albanna. All rights reserved.</p>
+      <p>&copy; 2026 SMAN 2 Smart Academy. All rights reserved.</p>
       <div class="flex items-center gap-3">
         <button onclick="toggleApiModal(true)" class="hover:text-brand-600 transition">Konfigurasi API</button>
         <span>•</span>
@@ -465,15 +465,15 @@
     // KONFIGURASI AUTOMATIS API WEB APP GOOGLE APPS SCRIPT
     // Tempelkan URL Web App Google Apps Script Anda di variabel DEFAULT_API_URL:
     // =========================================================================
-    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbyXup71i9y_yQiIFVBgdcXCxIJX1YYJeBhCjI6bFZz5BRPtqHta6RB67sXxX5VeI4fX/exec";
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
 
     let API_URL = localStorage.getItem('API_URL') || DEFAULT_API_URL;
     let currentUser = null; // { username, role, nisn, nama, kelas }
     let rawDatabase = {
       settings: {
-        nama_sekolah: 'SMA Albanna',
+        nama_sekolah: 'SMAN 2 SMART ACADEMY',
         logo_url: 'https://placehold.co/80x80/2563eb/ffffff?text=SMA',
-        tahun_ajaran: '2026/2027'
+        tahun_ajaran: '2025/2026'
       },
       users: [],
       students: [],
@@ -483,6 +483,17 @@
     // Chart.js Instances
     let semChartInstance = null;
     let subjChartInstance = null;
+
+    // Helper: Comparison string aman (tanpa beda spasi atau kapital)
+    function cleanStr(str) {
+      return String(str || '').trim().toLowerCase();
+    }
+
+    // Helper: Parse daftar NISN khusus jika diisi koma (e.g. "0051234001, 0051234002")
+    function parseAssignedNisns(nisnStr) {
+      if (!nisnStr) return [];
+      return String(nisnStr).split(',').map(s => cleanStr(s)).filter(Boolean);
+    }
 
     window.onload = function() {
       updateApiIndicator();
@@ -579,7 +590,7 @@
 
     function applySettings() {
       if (rawDatabase.settings) {
-        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMA Albanna';
+        document.getElementById('school-name').innerText = rawDatabase.settings.nama_sekolah || 'SMAN 2 SMART ACADEMY';
         document.getElementById('school-subtitle').innerText = `Sistem Informasi Hasil Belajar Siswa (${rawDatabase.settings.tahun_ajaran || '2025/2026'})`;
         if (rawDatabase.settings.logo_url) {
           document.getElementById('school-logo').src = rawDatabase.settings.logo_url;
@@ -592,7 +603,7 @@
       if (!rawDatabase.grades || rawDatabase.grades.length === 0) return [];
       const sampleRow = rawDatabase.grades[0];
       const reserved = ['nisn', 'nama', 'semester', 'sem', 'kelas', 'nis', 'no'];
-      return Object.keys(sampleRow).filter(k => !reserved.includes(k.toLowerCase()));
+      return Object.keys(sampleRow).filter(k => !reserved.includes(cleanStr(k)));
     }
 
     function handleLogin(e) {
@@ -601,7 +612,7 @@
       const passVal = document.getElementById('login-password').value.trim();
 
       const user = rawDatabase.users.find(u => 
-        String(u.username).toLowerCase() === userVal.toLowerCase() && 
+        cleanStr(u.username) === cleanStr(userVal) && 
         String(u.password) === passVal
       );
 
@@ -621,7 +632,7 @@
       document.getElementById('user-nav').classList.remove('hidden');
 
       document.getElementById('user-display-name').innerText = currentUser.nama || currentUser.username;
-      document.getElementById('user-display-role').innerText = currentUser.role.replace('_', ' ');
+      document.getElementById('user-display-role').innerText = String(currentUser.role).replace('_', ' ');
       document.getElementById('footer-user-role').innerText = `Role: ${currentUser.role}`;
 
       const classContainer = document.getElementById('class-filter-container');
@@ -634,17 +645,28 @@
       btnRekap.classList.add('hidden');
       btnRanking.classList.add('hidden');
 
-      if (currentUser.role === 'siswa') {
-        const student = rawDatabase.students.find(s => String(s.nisn) === String(currentUser.nisn));
+      const userRole = cleanStr(currentUser.role);
+
+      if (userRole === 'siswa') {
+        const student = rawDatabase.students.find(s => cleanStr(s.nisn) === cleanStr(currentUser.nisn));
         renderStudentDashboard(student || { nisn: currentUser.nisn, nama: currentUser.nama, kelas: currentUser.kelas });
-      } else if (currentUser.role === 'wali_kelas' || currentUser.role === 'guru_wali' || currentUser.role === 'guru wali') {
+      } else if (userRole === 'wali_kelas' || userRole === 'guru_wali' || userRole === 'guru wali') {
         classContainer.classList.remove('hidden');
         studentContainer.classList.remove('hidden');
         btnRekap.classList.remove('hidden');
 
-        populateClassDropdown([currentUser.kelas]);
+        // Cek apakah guru wali/wali kelas memiliki daftar NISN khusus di kolom `nisn` tab Pengguna
+        const assignedNisns = parseAssignedNisns(currentUser.nisn);
+        if (assignedNisns.length > 0) {
+          const allowedStudents = rawDatabase.students.filter(s => assignedNisns.includes(cleanStr(s.nisn)));
+          const userClasses = [...new Set(allowedStudents.map(s => s.kelas))].filter(Boolean);
+          populateClassDropdown(userClasses.length > 0 ? userClasses : [currentUser.kelas || 'Siswa Binaan']);
+        } else {
+          populateClassDropdown([currentUser.kelas]);
+        }
+        
         handleClassChange();
-      } else if (currentUser.role === 'admin') {
+      } else if (userRole === 'admin') {
         classContainer.classList.remove('hidden');
         studentContainer.classList.remove('hidden');
         btnRekap.classList.remove('hidden');
@@ -674,7 +696,16 @@
 
     function handleClassChange() {
       const selectedClass = document.getElementById('select-kelas').value;
-      const classStudents = rawDatabase.students.filter(s => s.kelas === selectedClass);
+      const userRole = cleanStr(currentUser ? currentUser.role : '');
+      const assignedNisns = (userRole === 'wali_kelas' || userRole === 'guru_wali' || userRole === 'guru wali') 
+        ? parseAssignedNisns(currentUser.nisn) 
+        : [];
+      
+      // Filter siswa: Jika guru memiliki daftar NISN binaan spesifik, filter berdasarkan NISN tersebut
+      let classStudents = rawDatabase.students.filter(s => cleanStr(s.kelas) === cleanStr(selectedClass));
+      if (assignedNisns.length > 0) {
+        classStudents = classStudents.filter(s => assignedNisns.includes(cleanStr(s.nisn)));
+      }
       
       const selectStudent = document.getElementById('select-siswa');
       selectStudent.innerHTML = classStudents.map(s => `<option value="${s.nisn}">${s.nama} (${s.nisn})</option>`).join('');
@@ -683,14 +714,17 @@
 
       if (classStudents.length > 0) {
         renderStudentDashboard(classStudents[0]);
+      } else {
+        showToast(`Tidak ada siswa ditemukan di kelas ${selectedClass}`, 'info');
       }
+
       renderClassRekapTable(selectedClass);
       renderRankingTable();
     }
 
     function handleStudentChange() {
       const selectedNisn = document.getElementById('select-siswa').value;
-      const student = rawDatabase.students.find(s => String(s.nisn) === String(selectedNisn));
+      const student = rawDatabase.students.find(s => cleanStr(s.nisn) === cleanStr(selectedNisn));
       if (student) {
         renderStudentDashboard(student);
       }
@@ -712,11 +746,11 @@
       document.getElementById('grad-student-info').innerText = `NISN: ${student.nisn} | Kelas: ${student.kelas}`;
 
       const subjects = getSubjectList();
-      const studentGrades = rawDatabase.grades.filter(g => String(g.nisn) === String(student.nisn));
+      const studentGrades = rawDatabase.grades.filter(g => cleanStr(g.nisn) === cleanStr(student.nisn));
 
       // Calculate semester averages (Semesters 1 to 6)
       const semAverages = [1, 2, 3, 4, 5, 6].map(sem => {
-        const semRow = studentGrades.find(g => String(g.semester) === String(sem) || String(g.semester) === `sem${sem}`);
+        const semRow = studentGrades.find(g => cleanStr(g.semester) === String(sem) || cleanStr(g.semester) === `sem${sem}`);
         if (!semRow) return 0;
 
         const scores = subjects.map(s => Number(semRow[s]) || 0).filter(score => score > 0);
@@ -763,7 +797,7 @@
 
       tbody.innerHTML = subjects.map(subj => {
         const semScores = [1, 2, 3, 4, 5, 6].map(sem => {
-          const semRow = studentGrades.find(g => String(g.semester) === String(sem) || String(g.semester) === `sem${sem}`);
+          const semRow = studentGrades.find(g => cleanStr(g.semester) === String(sem) || cleanStr(g.semester) === `sem${sem}`);
           return semRow && semRow[subj] !== undefined && semRow[subj] !== '' ? Number(semRow[subj]) : null;
         });
 
@@ -831,9 +865,9 @@
       const selectedSubject = document.getElementById('chart-subject-selector').value;
       const selectedNisn = document.getElementById('student-nisn').innerText;
       
-      const studentGrades = rawDatabase.grades.filter(g => String(g.nisn) === String(selectedNisn));
+      const studentGrades = rawDatabase.grades.filter(g => cleanStr(g.nisn) === cleanStr(selectedNisn));
       const scores = [1, 2, 3, 4, 5, 6].map(sem => {
-        const semRow = studentGrades.find(g => String(g.semester) === String(sem) || String(g.semester) === `sem${sem}`);
+        const semRow = studentGrades.find(g => cleanStr(g.semester) === String(sem) || cleanStr(g.semester) === `sem${sem}`);
         return semRow && semRow[selectedSubject] ? Number(semRow[selectedSubject]) : 0;
       });
 
@@ -865,14 +899,26 @@
     }
 
     function renderClassRekapTable(className) {
-      const classStudents = rawDatabase.students.filter(s => s.kelas === className);
+      let classStudents = rawDatabase.students.filter(s => cleanStr(s.kelas) === cleanStr(className));
+      
+      // Proteksi Guru Wali / Wali Kelas dengan daftar NISN binaan khusus
+      if (currentUser) {
+        const userRole = cleanStr(currentUser.role);
+        if (userRole === 'wali_kelas' || userRole === 'guru_wali' || userRole === 'guru wali') {
+          const assignedNisns = parseAssignedNisns(currentUser.nisn);
+          if (assignedNisns.length > 0) {
+            classStudents = classStudents.filter(s => assignedNisns.includes(cleanStr(s.nisn)));
+          }
+        }
+      }
+
       const subjects = getSubjectList();
       const tbody = document.getElementById('class-rekap-tbody');
 
       const studentStats = classStudents.map(s => {
-        const studentGrades = rawDatabase.grades.filter(g => String(g.nisn) === String(s.nisn));
+        const studentGrades = rawDatabase.grades.filter(g => cleanStr(g.nisn) === cleanStr(s.nisn));
         const semAverages = [1, 2, 3, 4, 5, 6].map(sem => {
-          const semRow = studentGrades.find(g => String(g.semester) === String(sem) || String(g.semester) === `sem${sem}`);
+          const semRow = studentGrades.find(g => cleanStr(g.semester) === String(sem) || cleanStr(g.semester) === `sem${sem}`);
           if (!semRow) return 0;
           const sc = subjects.map(subj => Number(semRow[subj]) || 0).filter(v => v > 0);
           return sc.length > 0 ? (sc.reduce((a, b) => a + b, 0) / sc.length) : 0;
@@ -904,24 +950,26 @@
     }
 
     function renderRankingTable() {
+      if (!currentUser || cleanStr(currentUser.role) !== 'admin') return;
+
       const mode = document.getElementById('ranking-semester-filter').value;
       const allStudents = rawDatabase.students;
       const subjects = getSubjectList();
 
       const ranked = allStudents.map(s => {
-        const studentGrades = rawDatabase.grades.filter(g => String(g.nisn) === String(s.nisn));
+        const studentGrades = rawDatabase.grades.filter(g => cleanStr(g.nisn) === cleanStr(s.nisn));
         let score = 0;
 
         if (mode === 'cumulative') {
           const semAvgs = [1, 2, 3, 4, 5, 6].map(sem => {
-            const semRow = studentGrades.find(g => String(g.semester) === String(sem) || String(g.semester) === `sem${sem}`);
+            const semRow = studentGrades.find(g => cleanStr(g.semester) === String(sem) || cleanStr(g.semester) === `sem${sem}`);
             if (!semRow) return 0;
             const sc = subjects.map(subj => Number(semRow[subj]) || 0).filter(v => v > 0);
             return sc.length > 0 ? (sc.reduce((a, b) => a + b, 0) / sc.length) : 0;
           }).filter(a => a > 0);
           score = semAvgs.length > 0 ? (semAvgs.reduce((a, b) => a + b, 0) / semAvgs.length) : 0;
         } else {
-          const semRow = studentGrades.find(g => String(g.semester) === String(mode) || String(g.semester) === `sem${mode}`);
+          const semRow = studentGrades.find(g => cleanStr(g.semester) === String(mode) || cleanStr(g.semester) === `sem${mode}`);
           if (semRow) {
             const sc = subjects.map(subj => Number(semRow[subj]) || 0).filter(v => v > 0);
             score = sc.length > 0 ? (sc.reduce((a, b) => a + b, 0) / sc.length) : 0;
@@ -953,8 +1001,23 @@
     }
 
     function selectStudentDirect(nisn) {
-      const student = rawDatabase.students.find(s => String(s.nisn) === String(nisn));
+      const student = rawDatabase.students.find(s => cleanStr(s.nisn) === cleanStr(nisn));
       if (student) {
+        // Jika akun guru, pastikan siswa yang diklik termasuk di kelas miliknya / daftar binaannya
+        const userRole = cleanStr(currentUser.role);
+        if (userRole === 'wali_kelas' || userRole === 'guru_wali' || userRole === 'guru wali') {
+          const assignedNisns = parseAssignedNisns(currentUser.nisn);
+          if (assignedNisns.length > 0) {
+            if (!assignedNisns.includes(cleanStr(student.nisn))) {
+              showToast('Anda hanya memiliki izin melihat siswa binaan Anda!', 'error');
+              return;
+            }
+          } else if (cleanStr(student.kelas) !== cleanStr(currentUser.kelas)) {
+            showToast('Anda hanya memiliki izin melihat siswa di kelas Anda!', 'error');
+            return;
+          }
+        }
+
         document.getElementById('select-kelas').value = student.kelas;
         handleClassChange();
         document.getElementById('select-siswa').value = nisn;
