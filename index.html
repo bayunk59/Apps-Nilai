@@ -160,7 +160,9 @@
             </p>
             <ul class="space-y-1 pl-4 list-disc text-[11px] text-slate-500">
               <li><b>Siswa:</b> Username = NISN, Password = NIS</li>
-              <li><b>Hubungi admin untuk reset akun</b></li>
+              <li><b>Wali Kelas:</b> Username = Nama Guru, Password = <code class="bg-slate-200 px-1 rounded">#smana2026</code></li>
+              <li><b>Guru Wali:</b> Username = Nama Guru, Password = <code class="bg-slate-200 px-1 rounded">#gwsmana</code></li>
+              <li><b>Admin:</b> Username = <code class="bg-slate-200 px-1 rounded">Orang</code>, Password = <code class="bg-slate-200 px-1 rounded">#Albanna123</code></li>
             </ul>
           </div>
         </div>
@@ -420,7 +422,7 @@
             <i class="fa-solid fa-lock"></i>
           </div>
           <h3 class="text-xl sm:text-2xl font-bold text-slate-900">Pengumuman Belum Dibuka</h3>
-          <p class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
+          <p id="grad-locked-message" class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
             Pengumuman Kelulusan Siswa belum dibuka oleh pihak sekolah. Silakan kembali lagi nanti sesuai dengan jadwal yang telah ditentukan.
           </p>
           <div class="pt-2">
@@ -452,7 +454,11 @@
             <span id="grad-status-text">LULUS</span>
           </div>
 
-          <p class="text-xs text-slate-400 mt-8 italic">
+          <!-- Dynamic Custom Message (Personal Student Message or General Config Message) -->
+          <p id="grad-custom-message" class="text-xs sm:text-sm text-slate-600 mt-4 max-w-md mx-auto font-medium leading-relaxed"></p>
+
+          <!-- Dynamic Quote / Footer Note -->
+          <p id="grad-quote-text" class="text-xs text-slate-400 mt-8 italic">
             "Keberhasilan adalah hasil dari kesempurnaan, kerja keras, belajar dari pengalaman, dan ketekunan."
           </p>
         </div>
@@ -465,7 +471,7 @@
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <p>&copy; 2026 Admi SMA Albanna. All rights reserved.</p>
+      <p>&copy; 2026 riga. All rights reserved.</p>
       <div class="flex items-center gap-3">
         <button onclick="toggleApiModal(true)" class="hover:text-brand-600 transition">Konfigurasi API</button>
         <span>•</span>
@@ -489,7 +495,7 @@
         nama_sekolah: 'SMA Albanna',
         logo_url: 'https://placehold.co/80x80/2563eb/ffffff?text=SMA',
         tahun_ajaran: '2026/2027',
-        pengumuman_kelulusan: 'Tutup'
+        pengumuman_kelulusan: 'Buka'
       },
       users: [],
       students: [],
@@ -834,10 +840,19 @@
       const cardLocked = document.getElementById('grad-card-locked');
       const cardContent = document.getElementById('grad-card-content');
       
+      // Get settings from Spreadsheet with fallbacks
+      const settings = rawDatabase.settings || {};
+
       // Check setting 'pengumuman_kelulusan' from Sheet
-      const isPengumumanOpen = cleanStr(rawDatabase.settings.pengumuman_kelulusan) === 'buka' || 
-                               cleanStr(rawDatabase.settings.pengumuman_kelulusan) === 'open' || 
-                               rawDatabase.settings.pengumuman_kelulusan === true;
+      const isPengumumanOpen = cleanStr(settings.pengumuman_kelulusan) === 'buka' || 
+                               cleanStr(settings.pengumuman_kelulusan) === 'open' || 
+                               settings.pengumuman_kelulusan === true;
+
+      // Update locked announcement message if customized in Sheet
+      const lockedMsgEl = document.getElementById('grad-locked-message');
+      if (lockedMsgEl) {
+        lockedMsgEl.innerText = settings.pesan_pengumuman_tutup || 'Pengumuman Kelulusan Siswa belum dibuka oleh pihak sekolah. Silakan kembali lagi nanti sesuai dengan jadwal yang telah ditentukan.';
+      }
 
       if (!isPengumumanOpen) {
         cardLocked.classList.remove('hidden');
@@ -850,25 +865,47 @@
 
       const gradBadge = document.getElementById('grad-status-badge');
       const gradText = document.getElementById('grad-status-text');
+      const gradCustomMsg = document.getElementById('grad-custom-message');
+      const gradQuote = document.getElementById('grad-quote-text');
+
+      // Update Quote if set in Sheet
+      if (gradQuote) {
+        gradQuote.innerText = settings.kutipan_pengumuman || '"Keberhasilan adalah hasil dari kesempurnaan, kerja keras, belajar dari pengalaman, dan ketekunan."';
+      }
 
       // Check per-student status from column 'status_kelulusan'
       const customStatus = cleanStr(student.status_kelulusan || student.status);
 
+      // Check personal custom message from student row (pesan_khusus or pesan_kelulusan)
+      const personalStudentMsg = student.pesan_khusus || student.pesan_kelulusan || student.pesan;
+
       if (customStatus === 'lulus') {
         gradBadge.className = 'inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-lg shadow-emerald-500/10';
         gradText.innerHTML = '<i class="fa-solid fa-circle-check"></i> LULUS';
+        if (gradCustomMsg) {
+          gradCustomMsg.innerText = personalStudentMsg || settings.pesan_lulus || 'Selamat! Anda dinyatakan LULUS. Tetap bersemangat dalam menggapai cita-cita dan melanjutkan pendidikan.';
+        }
       } else if (customStatus === 'tidak lulus' || customStatus === 'tidak_lulus') {
         gradBadge.className = 'inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-extrabold uppercase tracking-wide bg-rose-100 text-rose-800 border border-rose-300 shadow-lg shadow-rose-500/10';
         gradText.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> TIDAK LULUS';
+        if (gradCustomMsg) {
+          gradCustomMsg.innerText = personalStudentMsg || settings.pesan_tidak_lulus || 'Mohon maaf, Anda dinyatakan TIDAK LULUS. Silakan hubungi wali kelas atau pihak sekolah untuk informasi lebih lanjut.';
+        }
       } else {
         // Fallback calculation based on GPA >= 75
         const isGraduated = Number(overallGPA) >= 75.00;
         if (isGraduated) {
           gradBadge.className = 'inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-lg shadow-emerald-500/10';
           gradText.innerHTML = '<i class="fa-solid fa-circle-check"></i> DIPERTIMBANGKAN LULUS';
+          if (gradCustomMsg) {
+            gradCustomMsg.innerText = personalStudentMsg || settings.pesan_lulus || 'Selamat! Berdasarkan akumulasi nilai rata-rata 6 semester, Anda memenuhi kriteria kelulusan.';
+          }
         } else {
           gradBadge.className = 'inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-base font-extrabold uppercase tracking-wide bg-amber-100 text-amber-800 border border-amber-300 shadow-lg shadow-amber-500/10';
           gradText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> PERLU EVALUASI KHUSUS';
+          if (gradCustomMsg) {
+            gradCustomMsg.innerText = personalStudentMsg || settings.pesan_tidak_lulus || 'Nilai rata-rata Anda belum memenuhi standar minimum kelulusan. Silakan berkonsultasi dengan wali kelas.';
+          }
         }
       }
     }
